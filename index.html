@@ -250,10 +250,11 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--txt);min-h
 
 <!-- PRINT OVERLAY -->
 <div id="print-overlay" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;flex-direction:column;overflow:auto">
-  <div id="print-toolbar" style="background:#1b6b3a;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;position:sticky;top:0;z-index:10">
-    <span style="font-weight:800;font-size:1rem;flex:1">&#128424; Test spreman za printanje</span>
-    <button onclick="doPrint()" style="padding:8px 20px;background:#fff;color:#1b6b3a;border:none;border-radius:8px;font-weight:900;font-size:.9rem;cursor:pointer;font-family:inherit">&#128424; Printaj / PDF</button>
-    <button onclick="closeOverlay()" style="padding:8px 14px;background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.5);border-radius:8px;font-weight:700;font-size:.88rem;cursor:pointer;font-family:inherit">&#10005; Zatvori</button>
+  <div id="print-toolbar" style="background:#1b6b3a;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0;position:sticky;top:0;z-index:10;flex-wrap:wrap">
+    <span style="font-weight:800;font-size:.95rem;flex:1;min-width:120px">&#128424; Test spreman za print</span>
+    <button onclick="doPrint()" style="padding:8px 18px;background:#fff;color:#1b6b3a;border:none;border-radius:8px;font-weight:900;font-size:.88rem;cursor:pointer;font-family:inherit">&#128424; Printaj</button>
+    <button onclick="saveAsPDF()" style="padding:8px 18px;background:#f0c040;color:#1a1208;border:none;border-radius:8px;font-weight:900;font-size:.88rem;cursor:pointer;font-family:inherit">&#128229; Spremi kao PDF</button>
+    <button onclick="closeOverlay()" style="padding:8px 14px;background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.5);border-radius:8px;font-weight:700;font-size:.85rem;cursor:pointer;font-family:inherit">&#10005; Zatvori</button>
   </div>
   <div id="print-body" style="max-width:800px;margin:0 auto;width:100%;padding:0 0 30px"></div>
 </div>
@@ -1603,6 +1604,12 @@ function closeOverlay(){
   document.body.style.overflow='';
 }
 function doPrint(){window.print();}
+function saveAsPDF(){
+  var tb=document.getElementById('print-toolbar');
+  tb.style.display='none';
+  window.print();
+  setTimeout(function(){tb.style.display='flex';},500);
+}
 
 // ── START ──
 function startQuiz(){
@@ -1822,10 +1829,15 @@ function showRes(){
 // Zad.1 = A/B/C/D, Zad.2 = T/N, Zad.3 = Dopuni, Zad.4 = Esej
 // ═══════════════════════════════════════════════════════════════════════════
 function genPrint(){
+  // Snimamo trenutno odabranu knjigu u momentu generisanja
+  var pb=book;
   var pool=shuffle(Q.filter(function(q){
-    if(book==='both') return true;
-    if(book==='ilm12') return q.b==='ilm1'||q.b==='ilm2';
-    return q.b===book;
+    if(pb==='both')   return true;
+    if(pb==='ilm12')  return q.b==='ilm1'||q.b==='ilm2';
+    if(pb==='ilm1')   return q.b==='ilm1';
+    if(pb==='ilm2')   return q.b==='ilm2';
+    if(pb==='ilm3')   return q.b==='ilm3';
+    return false;
   }));
   if(!pool.length){alert('Nema pitanja!');return;}
 
@@ -1835,12 +1847,12 @@ function genPrint(){
   var opQ=shuffle(pool.filter(function(q){return q.t==='open';}));
 
   // Struktura testa: 10 MC + 10 TN + 5 Fill + 3 Open
-  var mc=mcQ.slice(0,10);
-  var tn=tnQ.slice(0,10);
-  var fil=filQ.slice(0,5);
-  var op=opQ.slice(0,3);
+  var mc=mcQ.slice(0,Math.min(10,mcQ.length));
+  var tn=tnQ.slice(0,Math.min(10,tnQ.length));
+  var fil=filQ.slice(0,Math.min(5,filQ.length));
+  var op=opQ.slice(0,Math.min(3,opQ.length));
 
-  var bkL=book==='both'?'Ilmihal 1 + 2 + 3':book==='ilm1'?'Ilmihal 1':book==='ilm2'?'Ilmihal 2':book==='ilm3'?'Ilmihal 3':'Ilmihal 1 + 2';
+  var bkL=pb==='both'?'Ilmihal 1 + 2 + 3':pb==='ilm1'?'Ilmihal 1':pb==='ilm2'?'Ilmihal 2':pb==='ilm3'?'Ilmihal 3':'Ilmihal 1 + 2';
 
   var h='';
 
@@ -1947,13 +1959,6 @@ function genPrint(){
   overlay.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
-
-function closeOverlay(){
-  document.getElementById('print-overlay').style.display = 'none';
-  document.body.style.overflow = '';
-}
-
-function doPrint(){ window.print(); }
 </script>
 
 <style>
@@ -2004,7 +2009,7 @@ function doPrint(){ window.print(); }
     display: block !important;
     overflow: visible !important;
   }
-  #print-body { padding: 0 !important; }
+  #print-body { padding: 0 !important; max-width: 100% !important; }
   .pzad { page-break-inside: avoid; }
   @page { size: A4; margin: 12mm 14mm 15mm 14mm; }
 }
